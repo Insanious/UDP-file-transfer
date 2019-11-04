@@ -1,0 +1,8 @@
+meta-packet:
+start_sequence_nr;file_size;file_name;total_nr_of_packets;nr_of_chunks
+
+chunk_meta_packet:
+start_sequence_nr;nr_of_packets
+
+packet:
+sequence_nr;data
