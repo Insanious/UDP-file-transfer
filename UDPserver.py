@@ -12,6 +12,9 @@ import errno
 import textwrap
 import math
 
+from file_manipulation import create_file_from_packets
+
+
 PACKET_SIZE = 1024
 SERVER_PORT = 80
 CHUNK_SIZE = 2048
@@ -159,16 +162,35 @@ def receive_all_chunks(server_socket):
 
 	chunk_sequence_nrs = get_chunk_sequence_nrs(nr_of_chunks)
 
-	packets.append(file_meta)
-
 	for sequence_nr in chunk_sequence_nrs:
 		chunks.append(receive_chunk(server_socket, sequence_nr, remaining_sequence_nrs))
 
+
 	for chunk in chunks: # store all packets in a 1d lsit
-		for packet in chunk:
-			packets.append(packet)
+		for packet in chunk[1:]: # remove chunk-meta packet from the data packets
+			packets.append(packet[7:]) # remove sequence nr and delim from data packet
+	'''
+
+	packets.append(file_meta)
+	for chunk in chunks: # store all packets in a 1d lsit
+		for packet in chunk: # remove chunk-meta packet from the data packets
+			packets.append(packet) # remove sequence nr and delim from data packet
+
+	count = 0
+	for i in range(0, len(packets)):
+		if len(packets[i]) != PACKET_SIZE:
+			count += 1
+			print(str(len(packets[i])) + " at " + str(i))
+	print(str(count) + " = count")
+	print("first=" + packets[0].split(";")[0])
+	print("last=" + packets[-1].split(";")[0])
+
+	print("last chunk contains: " + str(len(chunks[-1])))
+	print("last chunk meta: " + chunks[-1][0])
+	'''
 
 	print("--- ALL " + str(len(packets)) + " PACKETS RECEIVED! ---")
+	return file_name, packets
 
 
 def get_chunk_sequence_nrs(nr_of_chunks):
@@ -231,8 +253,12 @@ def create_socket():
 
 def main():
 	server_socket = create_socket()
-	while True:
-		receive_all_chunks(server_socket)
+	file_name, packets = receive_all_chunks(server_socket)
+	file_name = "copy_" + file_name
+	path = "temp"
+	file_name = os.path.join(path, file_name)
 
+	if create_file_from_packets(file_name, packets):
+		print("Successfully create " + file_name + " from " + str(len(packets)) + " packets!")
 
 main()

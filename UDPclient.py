@@ -16,12 +16,13 @@ import time
 import math
 import itertools
 
+
 META_RESEND_TIME = 0.5
 PACKET_SIZE = 1024
-CHUNK_SIZE = 2048
-MAX_TIME_BETWEEN_PACKETS = 0.05
-START_SEQUENCE_NUMBER = 100000
 SERVER_PORT = 80
+CHUNK_SIZE = 2048
+MAX_TIME_BETWEEN_PACKETS = 0.02
+START_SEQUENCE_NUMBER = 100000
 SERVER_DONE = "SERVER_DONE"
 META = "META"
 CHUNK = "CHUNK"
@@ -69,6 +70,13 @@ def create_file_meta_packet(file_name):
 	nr_of_data_packets = int(math.ceil(size / PACKET_SIZE))
 	nr_of_chunks = int(math.ceil(nr_of_data_packets / (CHUNK_SIZE - 1))) # -1 to account for the meta-chunk packet
 
+	print(nr_of_data_packets)
+	while True:
+		if int(math.ceil((nr_of_data_packets + nr_of_chunks) / CHUNK_SIZE)) > nr_of_chunks:
+			nr_of_chunks = int(math.ceil((nr_of_data_packets) + nr_of_chunks / CHUNK_SIZE))
+		else:
+			break
+
 	meta = str(sequence_nr) + ";"
 	meta += str(size) + ";"
 	meta += file_name + ";"
@@ -100,7 +108,7 @@ def file_to_chunks(file_name):
 				chunk_nr += 1
 				sequence_nr += 1
 				packet_counter += 1
-				chunks[chunk_nr].append(create_chunk_meta_packet(sequence_nr, remaining_packets + 1)) # +1 to account for the chunk-meta packet
+				chunks[chunk_nr].append(create_chunk_meta_packet(sequence_nr, remaining_packets)) # +1 to account for the chunk-meta packet
 
 			sequence_nr += 1
 			data = file.read(PACKET_SIZE - len(str(sequence_nr)) - 1) # -1 to account for the delimeter
@@ -149,6 +157,18 @@ def send_all_chunks(client_socket, server_ip, meta_packet, chunks):
 			nr_of_lost_packets = listen_and_send_lost_packets(client_socket, server_ip, packets)
 
 		total_lost_packets += nr_of_lost_packets_in_chunk
+
+	count = 0
+	for i in range(0, len(packets)):
+		if len(packets[i]) != PACKET_SIZE:
+			count += 1
+			print(str(len(packets[i])) + " at " + str(i))
+	print(str(count) + " = count")
+	print("first=" + packets[0].split(";")[0])
+	print("last=" + packets[-1].split(";")[0])
+
+	print("last chunk contains: " + str(len(chunks[-1])))
+	print("last chunk meta: " + chunks[-1][0])
 
 	print("All chunks sent with a total of " + str(total_lost_packets) + " lost packets out of " + str(len(packets)) + "!")
 
