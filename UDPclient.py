@@ -112,6 +112,14 @@ def file_to_chunks(file_name):
 			packet_counter += 1
 			remaining_packets -= 1
 
+	# last chunk-meta is incorrect, this is an easy fix to the problem
+	last_chunk_meta = chunks[-1][0]
+	last_sequence_nr = last_chunk_meta.split(";")[0]
+	last_remaining_packets = len(chunks[-1]) - 1 # len is always 1 more than
+	chunks[-1][0] = create_chunk_meta_packet(last_sequence_nr, last_remaining_packets)
+
+	print("last: " + str(len(chunks[-1])))
+
 	return meta_packet, chunks
 
 
