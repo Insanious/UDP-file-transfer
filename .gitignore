@@ -1,0 +1,7 @@
+# folders
+temp/
+__pycache__/
+
+# files
+big_file.txt
+creator.py
