@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-# TODO:
-# Decompress file after receiving
 
 import socket
 import os
@@ -43,7 +41,7 @@ def reply_lost_packets(server_socket, client_address, lost_packets):
 	while remaining_nrs > 0:
 		packet = ""
 
-		if remaining_nrs < sequence_nrs_per_packet: # reduce loop iterations for the remaining few sequence nrs
+		if remaining_nrs < sequence_nrs_per_packet: # reduce loop iterations for the last iteration
 			sequence_nrs_in_packet = remaining_nrs
 		remaining_nrs -= sequence_nrs_in_packet # remove the number of sequence nrs left that we need to iterate through
 
@@ -148,7 +146,7 @@ def receive_file_meta(server_socket):
 
 
 def receive_all_chunks(server_socket):
-	print("\n--- READY TO RECEIVE NEW FILE ---\n")
+	print("\n--- READY TO RECEIVE FILE ---\n")
 	chunks = []
 	packets = []
 	new_packets = []
@@ -240,6 +238,6 @@ def main():
 	file_name = os.path.join(path, file_name)
 
 	if create_file_from_packets(file_name, packets):
-		print("Successfully create " + file_name + " from " + str(len(packets)) + " packets!")
+		print("Successfully created " + file_name + " from " + str(len(packets)) + " packets!")
 
 main()

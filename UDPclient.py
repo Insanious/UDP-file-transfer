@@ -3,9 +3,6 @@
 
 # A client that sends a file to a server using UDP-protocol #
 
-# TODO:
-# Compress file before sending
-
 
 import socket
 import time
@@ -60,30 +57,12 @@ def send_meta_and_listen(client_socket, server_ip, meta_packet):
 
 
 def create_file_meta_packet(file_name, nr_of_chunks, nr_of_packets):
-	'''
-	instead of creating file_meta from math,
-	create it after all the chunks have been filled.
-	then we have nr_of_chunks and total_nr_of_packets and there is no need to calculate it
-
-	also create chunk_meta after chunk has been filled,
-	then we have nr_of_packets and start_sequence_nr amd there is no need to calculate it
-	'''
-
 	size = os.stat(file_name).st_size # exists if not zero
 	if (size == 0):
 		print("invalid file size")
 		sys.exit(0)
 
 	sequence_nr = START_SEQUENCE_NUMBER
-	#size = int(size + (size / PACKET_SIZE) * 7)
-	#nr_of_data_packets = int(math.ceil(size / PACKET_SIZE))
-	#nr_of_chunks = int(math.ceil(nr_of_data_packets / (CHUNK_SIZE - 1))) # -1 to account for the meta-chunk packet
-
-	# while True:
-	# 	if int(math.ceil((nr_of_data_packets + nr_of_chunks) / CHUNK_SIZE)) > nr_of_chunks:
-	# 		nr_of_chunks = int(math.ceil((nr_of_data_packets) + nr_of_chunks / CHUNK_SIZE))
-	# 	else:
-	# 		break
 
 	meta = str(sequence_nr) + ";"
 	meta += str(size) + ";"
@@ -104,8 +83,6 @@ def file_to_chunks(file_name):
 	chunks = []
 	packet_counter = 0
 	chunk_nr = -1 # because it gets incremented at first iteration
-	#meta_packet = create_file_meta_packet(file_name)
-	#remaining_packets = int(meta_packet.split(";")[-2])
 
 	sequence_nr = START_SEQUENCE_NUMBER
 
@@ -128,7 +105,6 @@ def file_to_chunks(file_name):
 			data = str(sequence_nr) + ";" + data
 			chunks[chunk_nr].append(data)
 			packet_counter += 1
-			#remaining_packets -= 1
 
 			if packet_counter % CHUNK_SIZE == 0: # insert chunk-meta after chunk has been filled
 				chunks[chunk_nr].insert(0, create_chunk_meta_packet(chunk_seq_nr, len(chunks[chunk_nr]) + 1)) # +1 to account for chunk-meta
