@@ -169,25 +169,6 @@ def receive_all_chunks(server_socket):
 	for chunk in chunks: # store all packets in a 1d lsit
 		for packet in chunk[1:]: # remove chunk-meta packet from the data packets
 			packets.append(packet[7:]) # remove sequence nr and delim from data packet
-	'''
-
-	packets.append(file_meta)
-	for chunk in chunks: # store all packets in a 1d lsit
-		for packet in chunk: # remove chunk-meta packet from the data packets
-			packets.append(packet) # remove sequence nr and delim from data packet
-
-	count = 0
-	for i in range(0, len(packets)):
-		if len(packets[i]) != PACKET_SIZE:
-			count += 1
-			print(str(len(packets[i])) + " at " + str(i))
-	print(str(count) + " = count")
-	print("first=" + packets[0].split(";")[0])
-	print("last=" + packets[-1].split(";")[0])
-
-	print("last chunk contains: " + str(len(chunks[-1])))
-	print("last chunk meta: " + chunks[-1][0])
-	'''
 
 	print("--- ALL " + str(len(packets)) + " PACKETS RECEIVED! ---")
 	return file_name, packets
