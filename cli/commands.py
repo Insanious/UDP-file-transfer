@@ -25,7 +25,7 @@ def valid_ip(ip_address):
 	return True
 
 def command_send(arguments, options, flags):
-	command = "UDPclient.py"
+	command = "client_main.py"
 
 	file = arguments[0]
 	if not file_exists(file):
@@ -35,13 +35,13 @@ def command_send(arguments, options, flags):
 	if not valid_ip(ip_address):
 		return
 
-	subprocess.call(["python", command, file, ip_address])
+	subprocess.call(["python3", command, file, ip_address])
 
 
 def command_receive(arguments, options, flags):
-	command = "UDPserver.py"
+	command = "server_main.py"
 
-	subprocess.call(['sudo', "python", command])
+	subprocess.call(['sudo', "python3", command])
 
 
 def command_exit():

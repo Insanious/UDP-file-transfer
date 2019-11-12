@@ -7,8 +7,6 @@ import os
 import sys
 import time
 import errno
-import textwrap
-import math
 
 from file_manipulation import create_file_from_packets
 
