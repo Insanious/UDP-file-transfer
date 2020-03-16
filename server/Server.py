@@ -1,19 +1,11 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import socket
 import time
+import logging
 
-from utilities import handle_socket_errors
-from utilities import create_server_socket
-from utilities import get_remaining_chunk_sequence_nrs
-from utilities import get_chunk_sequence_nrs
-from utilities import update_packets
-from utilities import extract_file_meta
-from utilities import calculate_remaining_sequence_nrs
-from utilities import handle_meta_packet
-
+from utilities.utilities import *
 
 class Server:
 	PACKET_SIZE = 1024
@@ -27,12 +19,14 @@ class Server:
 
 
 	def __init__(self):
+		self.logger = logging.getLogger(__name__)
+
+		self.logger.info(f"creating server socket on port {self.SERVER_PORT}")
 		self.socket = create_server_socket(self.SERVER_PORT)
 		self.client_address = None
 
 
 	def receive_all_chunks(self):
-		print("\n--- READY TO RECEIVE FILE ---\n")
 		chunks = []
 		packets = []
 		new_packets = []
@@ -43,19 +37,21 @@ class Server:
 		file_meta, client_address = self.receive_file_meta()
 		self.client_address = client_address
 		file_size, file_name, nr_of_packets, remaining_sequence_nrs, nr_of_chunks = handle_meta_packet(file_meta)
-		self.reply_message(self.META) # send GO to client, making the client send all packets
 
-		chunk_sequence_nrs = get_chunk_sequence_nrs(self.START_SEQUENCE_NUMBER, self.CHUNK_SIZE, nr_of_chunks)
+		chunk_sequence_nrs = generate_chunk_sequence_nrs(self.START_SEQUENCE_NUMBER, self.CHUNK_SIZE, nr_of_chunks)
+
+		self.logger.info("sending META to client")
+		self.reply_message(self.META) # send META to client, making the client send all chunks
 
 		for sequence_nr in chunk_sequence_nrs:
 			chunks.append(self.receive_chunk(sequence_nr, remaining_sequence_nrs))
 
-
-		for chunk in chunks: # store all packets in a 1d lsit
+		for chunk in chunks: # store all packets in a 1d list
 			for packet in chunk[1:]: # remove chunk-meta packet from the data packets
 				packets.append(packet[7:]) # remove sequence nr and delim from data packet
 
-		print("\n--- ALL " + str(len(packets)) + " PACKETS RECEIVED! ---\n")
+		self.logger.info(f"all {len(packets)} packets received")
+
 		return file_name, packets
 
 
@@ -73,6 +69,7 @@ class Server:
 					new_packets = []
 					first_packet_received = False
 					if self.reply_lost_packets(remaining_nrs_in_chunk):
+						self.logger.info(f"all packets received in chunk {int((chunk_sequence_nr - self.START_SEQUENCE_NUMBER - 1) / self.CHUNK_SIZE)}")
 						break
 
 				packet, client_address = self.socket.recvfrom(self.PACKET_SIZE)
@@ -88,10 +85,16 @@ class Server:
 				if not first_packet_received:
 					first_packet_received = True
 
-					incoming_sequence_nr = int(packet.split(";")[0])
+					split_packet = packet.split(";")
+					incoming_sequence_nr = int(split_packet[0])
 					if incoming_sequence_nr == chunk_sequence_nr: # meta packet
-						total_packets = int(packet.split(";")[1])
-						remaining_nrs_in_chunk = get_remaining_chunk_sequence_nrs(chunk_sequence_nr, total_packets)
+						self.logger.info("chunk meta packet received")
+
+						total_packets = int(split_packet[1])
+						remaining_nrs_in_chunk = calculate_remaining_chunk_sequence_nrs(chunk_sequence_nr, total_packets)
+						#self.logger.info(f"remaining packets in chunk:{len(remaining_nrs_in_chunk)}")
+
+						self.logger.info("sending CHUNK to client")
 						self.reply_message(self.CHUNK)
 
 				last_packet_time = time.clock()
@@ -104,11 +107,11 @@ class Server:
 
 		if len(remaining_sequence_nrs) != 0: # print information if there were lost packets
 			padding = 7
-			information = "-chunk: " + str(int((chunk_sequence_nr - self.START_SEQUENCE_NUMBER - 1) / self.CHUNK_SIZE)).ljust(padding)
+			information = "chunk: " + str(int((chunk_sequence_nr - self.START_SEQUENCE_NUMBER - 1) / self.CHUNK_SIZE)).ljust(padding)
 			information += "new: " + str(len(new_packets)).ljust(padding)
 			information += "remaining in chunk: " + str(len(remaining_sequence_nrs)).ljust(padding)
 			information += "total: " + str(len(chunk)).ljust(padding)
-			print(information)
+			self.logger.info(information)
 
 		return chunk, remaining_sequence_nrs
 
@@ -148,6 +151,8 @@ class Server:
 
 
 	def receive_file_meta(self):
+		self.logger.info("trying to receive file meta packet...")
+
 		while True:
 			try:
 				packet, client_address = self.socket.recvfrom(self.PACKET_SIZE)
@@ -158,9 +163,12 @@ class Server:
 
 			else:
 				packet = packet.decode()
-				incoming_sequence_nr = int(packet.split(";")[0])
+				incoming_sequence_nr = get_sequence_nr(packet)
 				if incoming_sequence_nr == self.START_SEQUENCE_NUMBER: # meta packet
+					self.logger.info("file meta packet received")
+
 					return packet, client_address
+
 
 
 	def reply_message(self, message):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import sys
@@ -11,7 +10,7 @@ import re
 
 
 def file_exists(file):
-	if not os.path.isfile("./" + file):
+	if not os.path.isfile("./" + file) and not os.path.isdir("./" + file):
 		print(file + " does not exist you fucking degenerate")
 		return False
 	return True
@@ -35,6 +34,7 @@ def command_send(arguments, options, flags):
 	if not valid_ip(ip_address):
 		return
 
+	#subprocess.call(["python3", command, "temp", "192.168.1.66"])
 	subprocess.call(["python3", command, file, ip_address])
 
 

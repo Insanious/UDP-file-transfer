@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 from commands import command_receive

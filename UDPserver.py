@@ -8,7 +8,7 @@ import sys
 import time
 import errno
 
-from file_manipulation import create_file_from_packets
+from utilities.file_manipulation import create_file_from_packets
 
 
 PACKET_SIZE = 1024
