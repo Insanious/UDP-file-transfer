@@ -3,6 +3,10 @@
 
 import errno
 import socket
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def handle_socket_errors(error):
@@ -37,14 +41,14 @@ def create_server_socket(server_port):
 
 	return server_socket
 
-def get_remaining_chunk_sequence_nrs(start_sequence_nr, nr_of_packets):
+def calculate_remaining_chunk_sequence_nrs(start_sequence_nr, nr_of_packets):
 	remaining_nrs = []
 	for i in range(0, nr_of_packets):
 		remaining_nrs.append(start_sequence_nr + i)
 
 	return remaining_nrs
 
-def get_chunk_sequence_nrs(start_sequence_nr, chunk_size, nr_of_chunks):
+def generate_chunk_sequence_nrs(start_sequence_nr, chunk_size, nr_of_chunks):
 	sequence_nrs = []
 	for i in range(0, nr_of_chunks):
 		sequence_nrs.append((start_sequence_nr + 1) + (i * chunk_size)) # +1 to account for the file meta packet seq nr (start_sequence_nr)
@@ -53,15 +57,19 @@ def get_chunk_sequence_nrs(start_sequence_nr, chunk_size, nr_of_chunks):
 
 def update_packets(chunk, new_packets, remaining_sequence_nrs):
 	for packet in new_packets:
-		incoming_sequence_nr = ""
-		for i in range(0, 6):
-			incoming_sequence_nr += str(chr(packet[i]))
-		incoming_sequence_nr = int(incoming_sequence_nr) # extract sequence number
+		incoming_sequence_nr = get_sequence_nr(packet) # extract sequence number
+
 		if incoming_sequence_nr in remaining_sequence_nrs: # if incoming sequence number exists in remaining, remove it and add packet to 'packets'
 			remaining_sequence_nrs.remove(incoming_sequence_nr)
 			chunk.append(packet)
 
 	return chunk, remaining_sequence_nrs
+
+def get_sequence_nr(packet):
+	return int(packet.split(';')[0])
+
+def get_total_packets(packet):
+	return int(packet.split(';')[1])
 
 def extract_file_meta(file_meta):
 	file_meta = file_meta.split(';')

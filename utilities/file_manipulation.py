@@ -3,10 +3,14 @@
 
 import shutil
 import os
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_file_from_packets(file_name, packets):
-	print("Creating file...")
+	logger.info("Creating file...")
 	with open(file_name, "w+") as file:
 		for packet in packets:
 			file.write(packet)
@@ -14,7 +18,7 @@ def create_file_from_packets(file_name, packets):
 	return True
 
 def create_file_from_binary_packets(file_name, packets):
-	print("Creating file...")
+	logger.info("Creating zip file...")
 	with open(file_name + ".zip", "wb+") as file:
 		for packet in packets:
 			file.write(packet)
