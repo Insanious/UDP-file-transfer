@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import socket
@@ -13,6 +12,7 @@ from utilities import update_packets
 from utilities import extract_file_meta
 from utilities import calculate_remaining_sequence_nrs
 from utilities import handle_meta_packet
+from utilities import extract_chunk_meta
 
 
 class Server:
@@ -50,8 +50,7 @@ class Server:
 		for sequence_nr in chunk_sequence_nrs:
 			chunks.append(self.receive_chunk(sequence_nr, remaining_sequence_nrs))
 
-
-		for chunk in chunks: # store all packets in a 1d lsit
+		for chunk in chunks: # store all packets in a 1d list
 			for packet in chunk[1:]: # remove chunk-meta packet from the data packets
 				packets.append(packet[7:]) # remove sequence nr and delim from data packet
 
@@ -82,15 +81,15 @@ class Server:
 					continue
 
 			else:
-				packet = packet.decode()
 				new_packets.append(packet)
 
 				if not first_packet_received:
 					first_packet_received = True
 
-					incoming_sequence_nr = int(packet.split(";")[0])
-					if incoming_sequence_nr == chunk_sequence_nr: # meta packet
-						total_packets = int(packet.split(";")[1])
+					total_packets = extract_chunk_meta(packet, chunk_sequence_nr)
+
+					if total_packets != -1:
+						total_packets = int(total_packets)
 						remaining_nrs_in_chunk = get_remaining_chunk_sequence_nrs(chunk_sequence_nr, total_packets)
 						self.reply_message(self.CHUNK)
 

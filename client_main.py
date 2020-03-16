@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import sys
@@ -21,11 +20,14 @@ def extract_arguments():
 def main():
 	file_name, server_ip = extract_arguments()
 	packager = File_Packager(file_name)
+
 	client = Client(server_ip)
 
-	meta_packet, chunks = packager.file_to_chunks()
+	meta_packet, chunks = packager.archive_to_chunks()
 
-	client.send_all_chunks(meta_packet, chunks)
+	client.send_all_archive_chunks(meta_packet, chunks)
+
+	packager.remove_archive()
 	client.close_socket()
 
 

@@ -6,6 +6,7 @@ import os
 
 from Server import Server
 from file_manipulation import create_file_from_packets
+from file_manipulation import create_file_from_binary_packets
 
 
 def main():
@@ -16,10 +17,8 @@ def main():
 	path = "temp"
 	file_name = os.path.join(path, file_name)
 
-	if create_file_from_packets(file_name, packets):
+	if create_file_from_binary_packets(file_name, packets):
 		print("Successfully created " + file_name + " from " + str(len(packets)) + " packets!")
-	else:
-		print("Something whent wrong when trying to create " + file_name + " from " + str(len(packets)) + " packets...")
 
 
 main()

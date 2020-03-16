@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import errno
@@ -54,7 +53,10 @@ def get_chunk_sequence_nrs(start_sequence_nr, chunk_size, nr_of_chunks):
 
 def update_packets(chunk, new_packets, remaining_sequence_nrs):
 	for packet in new_packets:
-		incoming_sequence_nr = int(packet.split(";")[0]) # extract sequence number
+		incoming_sequence_nr = ""
+		for i in range(0, 6):
+			incoming_sequence_nr += str(chr(packet[i]))
+		incoming_sequence_nr = int(incoming_sequence_nr) # extract sequence number
 		if incoming_sequence_nr in remaining_sequence_nrs: # if incoming sequence number exists in remaining, remove it and add packet to 'packets'
 			remaining_sequence_nrs.remove(incoming_sequence_nr)
 			chunk.append(packet)
@@ -86,3 +88,24 @@ def handle_meta_packet(packet):
 	remaining_sequence_nrs = calculate_remaining_sequence_nrs(first_sequence_nr, nr_of_packets)
 
 	return file_size, file_name, nr_of_packets, remaining_sequence_nrs, nr_of_chunks
+
+def extract_chunk_meta(packet, chunk_sequence_nr):
+	incoming_sequence_nr = ""
+	for i in range(0, 6):
+		incoming_sequence_nr += str(chr(packet[i]))
+
+	if int(incoming_sequence_nr) != chunk_sequence_nr:
+		return -1
+
+	total_packets = ""
+	i = len(incoming_sequence_nr)
+	while True:
+		try:
+			i += 1
+			val = str(chr(packet[i]))
+		except:
+			break
+		else:
+			total_packets += val
+
+	return int(total_packets)

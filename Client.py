@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 
 
 import socket
@@ -51,7 +50,7 @@ class Client:
 						return True
 
 
-	def send_all_chunks(self, meta_packet, chunks):
+	def send_all_archive_chunks(self, meta_packet, chunks):
 		total_lost_packets = 0
 
 		packets = []
@@ -70,13 +69,14 @@ class Client:
 			nr_of_packets = len(chunk) # -1 to remove chunk meta
 
 			while True: # send chunk meta
-				if self.send_meta_and_listen(chunk[0]):
-					chunk_nr = (int(chunk[0].split(";")[0]) - self.START_SEQUENCE_NUMBER + 1) / self.CHUNK_SIZE
+				if self.send_meta_and_listen(chunk[0].decode()):
+					_chunk = chunk[0].decode()
+					chunk_nr = (int(_chunk.split(";")[0]) - self.START_SEQUENCE_NUMBER + 1) / self.CHUNK_SIZE
 					break
 
 			print("-SENDING CHUNK " + str(int(chunk_nr)))
 			for i in range(1, nr_of_packets): # send all packets, start at 1 because the first packet has already been sent (meta-chunk)
-				self.socket.sendto(chunk[i].encode(), (self.server_ip, self.SERVER_PORT))
+				self.socket.sendto(chunk[i], (self.server_ip, self.SERVER_PORT))
 
 			nr_of_lost_packets = self.listen_and_send_lost_packets(packets)
 			while nr_of_lost_packets != 0: # resend packets while there are any lost packets
@@ -110,7 +110,7 @@ class Client:
 
 	def send_all(self, packets):
 		for packet in packets:
-			self.socket.sendto(packet.encode(),(self.server_ip, self.SERVER_PORT))
+			self.socket.sendto(packet, (self.server_ip, self.SERVER_PORT))
 
 
 	def listen_for_lost_packets(self):
